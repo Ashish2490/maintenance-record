@@ -24,6 +24,19 @@
     h1{margin:0 0 10px;font-size:24px;letter-spacing:.3px}
     .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .row > *{flex:0 0 auto}
+    .pill label,
+    .pill input,
+    .pill select {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .pill input,
+    .pill select {
+      margin-left: 8px;
+      min-width: 180px;
+      width: 180px;
+      max-width: 100%;
+    }
     input,select,button,textarea{background:#0b1220;border:1px solid #223049;color:var(--text);padding:10px 12px;border-radius:12px;outline:none}
     input[type="number"]{width:110px;text-align:right}
     input[type="date"]{min-width:150px}
@@ -60,6 +73,79 @@
     .flex-1{flex:1}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
     textarea{width:100%;min-height:120px}
+
+    /* --- Mobile Responsive Styles --- */
+    @media (max-width:600px) {
+      .container{max-width:100vw;margin:8px auto;padding:6px;}
+      .card{padding:10px;border-radius:12px;}
+      h1{font-size:18px;}
+      .row{flex-direction:column;align-items:stretch;gap:8px;}
+      .pill{padding:6px 8px;font-size:14px;}
+      input,select,button,textarea{padding:8px 8px;font-size:15px;}
+      input[type="number"], input[type="date"], select{min-width:0;width:100%;}
+      .tabs{gap:4px;}
+      .tab{padding:6px 8px;font-size:13px;}
+      .grid{grid-template-columns:1fr;gap:10px;}
+      .footer{flex-direction:column;align-items:stretch;gap:6px;}
+      table{font-size:13px;}
+      thead th, tbody td, tfoot td{padding:7px 4px;}
+      .status{padding:4px 7px;font-size:11px;}
+      textarea{min-height:80px;}
+    }
+    @media (max-width:400px) {
+      h1{font-size:15px;}
+      .pill{font-size:12px;}
+      .tab{font-size:11px;}
+      table{font-size:11px;}
+    }
+    /* Table horizontal scroll for mobile */
+    #tableWrap {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+    table {
+      width: 100%;
+      min-width: unset; /* Remove forced min-width */
+    }
+    @media (max-width:600px) {
+      table { min-width: unset; }
+      thead th, tbody td, tfoot td { padding: 5px 2px; }
+      input[type="number"], input[type="date"] { padding: 6px 4px; font-size: 13px; }
+      .status { padding: 2px 5px; font-size: 10px; }
+      .tab { font-size: 12px; }
+      .pill { font-size: 13px; }
+      .row, .footer { gap: 4px; }
+    }
+    @media (max-width:400px) {
+      table { font-size: 10px; }
+      .tab { font-size: 10px; }
+      .pill { font-size: 11px; }
+    }
+    /* Remove scroll hint if not needed */
+    #tableWrap::after { display: none !important; }
+
+    .btn-group {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      background: #0b1220;
+      border-radius: 12px;
+      padding: 4px 8px;
+      border: 1px solid #223049;
+    }
+    .btn-group .btn {
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+      background: linear-gradient(180deg,#132036,#0e1a2b);
+      border: 1px solid #223049;
+    }
+    .btn-group .btn input[type="file"] {
+      display: none;
+    }
   </style>
   <!-- Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -72,11 +158,13 @@
     <div class="card">
       <h1>🏡 સોસાયટી મેન્ટેનન્સ રેકોર્ડ (ગુજરાતી)</h1>
       <div class="row" style="margin-top:6px">
-        <label class="pill">સોસાયટી નામ:
-          <input id="society" placeholder="સ્ટાર ગાર્ડન બિ બિલ્ડિંગ" style="margin-left:8px;min-width:220px" />
+        <label class="pill">
+          <span>સોસાયટી નામ:</span>
+          <input id="society" placeholder="સ્ટાર ગાર્ડન બિ બિલ્ડિંગ" />
         </label>
-        <label class="pill">વર્ષ:
-          <select id="year" style="margin-left:8px"></select>
+        <label class="pill">
+          <span>વર્ષ:</span>
+          <select id="year"></select>
         </label>
         <span class="pill small">કુલ ફ્લેટ: <b>22</b></span>
         <span class="pill small">ડેટા સેવ: <span id="saveStatus" class="muted">-</span></span>
@@ -90,8 +178,10 @@
         <button class="btn ok" id="saveBtn">💾 સેવ</button>
         <button class="btn primary" id="copyBtn">📋 WhatsApp મેસેજ કૉપી</button>
         <button class="btn warn" id="clearMonth">🧹 આ મહિનો ક્લિયર</button>
-        <button class="btn" id="downloadJson">⬇️ બેકઅપ (JSON)</button>
-        <label class="btn" for="uploadJson" style="cursor:pointer">⬆️ રીસ્ટોર <input id="uploadJson" type="file" accept="application/json" style="display:none"></label>
+        <span class="btn-group">
+          <button class="btn" id="downloadJson">⬇️ બેકઅપ</button>
+          <label class="btn" for="uploadJson" style="cursor:pointer">⬆️ રીસ્ટોર<input id="uploadJson" type="file" accept="application/json"></label>
+        </span>
       </div>
 
       <div class="divider"></div>
@@ -118,6 +208,7 @@
       'જાન્યુઆરી','ફેબ્રુઆરી','માર્ચ','એપ્રિલ','મે','જૂન','જુલાઈ','ઓગસ્ટ','સપ્ટેમ્બર','ઓક્ટોબર','નવેમ્બર','ડિસેમ્બર'
     ];
     const STORAGE_KEY = 'sg_maintenance_v1';
+    const MAINTENANCE_AMOUNT = 800; // Change this value as needed
 
     // ====== State ======
     let state = loadState();
@@ -224,7 +315,7 @@
     }
 
     function statusBadge(amount){
-      const paid = (amount!=='' && Number(amount) > 0);
+      const paid = (Number(amount) === MAINTENANCE_AMOUNT);
       return `<span class="status ${paid?'paid':'due'}">${paid?'જમા':'બાકી'}</span>`
     }
 
@@ -240,7 +331,7 @@
       const society = document.getElementById('society').value || 'સ્ટાર ગાર્ડન';
       const lines = [];
       lines.push(`🏡 ${society} – ${monthName} ${y}`);
-      lines.push(`📋 મેન્ટેનન્સ વસુલાત`);
+      lines.push(`📋 મેન્ટેનન્સ આવક`); // changed word here
       lines.push('');
       lines.push(`તારીખ       ફ્લેટ નં   રકમ    સ્થિતિ`);
       FLATS.forEach(f=>{
@@ -252,7 +343,7 @@
       });
       lines.push('');
       lines.push('-----------------------------------');
-      lines.push(`💰 કુલ વસુલાત: ₹${fmt(monthlyTotal(y,m))}`);
+      lines.push(`💰 કુલ આવક: ₹${fmt(monthlyTotal(y,m))}`); // changed word here
       document.getElementById('waText').value = lines.join('\n');
     }
 
@@ -307,8 +398,10 @@
     (function init(){
       document.getElementById('society').value = state.society || 'સ્ટાર ગાર્ડન';
       buildYearOptions();
-      buildMonthTabs();
-      const activeM = new Date().getMonth();
+      // Show last month by default
+      let activeM = new Date().getMonth() - 1;
+      if (activeM < 0) activeM = 11; // If January, show December
+      buildMonthTabs(activeM); // <-- pass activeM here
       renderMonthTable(activeM);
       renderYearSummary();
       buildWhatsAppText(activeM);
