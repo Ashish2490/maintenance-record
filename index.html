@@ -39,7 +39,6 @@
     }
     input,select,button,textarea{background:#0b1220;border:1px solid #223049;color:var(--text);padding:10px 12px;border-radius:12px;outline:none}
     input[type="number"]{width:110px;text-align:right}
-    input[type="date"]{min-width:150px}
     select{min-width:140px}
     button{cursor:pointer;border:1px solid #2a3a55}
     .btn{display:inline-flex;gap:8px;align-items:center}
@@ -82,7 +81,7 @@
       .row{flex-direction:column;align-items:stretch;gap:8px;}
       .pill{padding:6px 8px;font-size:14px;}
       input,select,button,textarea{padding:8px 8px;font-size:15px;}
-      input[type="number"], input[type="date"], select{min-width:0;width:100%;}
+      input[type="number"], select{min-width:0;width:100%;}
       .tabs{gap:4px;}
       .tab{padding:6px 8px;font-size:13px;}
       .grid{grid-template-columns:1fr;gap:10px;}
@@ -99,21 +98,11 @@
       table{font-size:11px;}
     }
     /* Table horizontal scroll for mobile */
-    #tableWrap {
-      display: block;
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      position: relative;
-    }
-    table {
-      width: 100%;
-      min-width: unset; /* Remove forced min-width */
-    }
+    #tableWrap { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; }
+    table { width: 100%; min-width: unset; }
     @media (max-width:600px) {
       table { min-width: unset; }
       thead th, tbody td, tfoot td { padding: 5px 2px; }
-      input[type="number"], input[type="date"] { padding: 6px 4px; font-size: 13px; }
       .status { padding: 2px 5px; font-size: 10px; }
       .tab { font-size: 12px; }
       .pill { font-size: 13px; }
@@ -124,7 +113,6 @@
       .tab { font-size: 10px; }
       .pill { font-size: 11px; }
     }
-    /* Remove scroll hint if not needed */
     #tableWrap::after { display: none !important; }
 
     .btn-group {
@@ -143,15 +131,12 @@
       background: linear-gradient(180deg,#132036,#0e1a2b);
       border: 1px solid #223049;
     }
-    .btn-group .btn input[type="file"] {
-      display: none;
-    }
+    .btn-group .btn input[type="file"] { display: none; }
   </style>
-  <!-- Flatpickr CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<!-- Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+  <!-- Flatpickr CSS/JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
   <div class="container">
@@ -212,12 +197,29 @@
 
     // ====== State ======
     let state = loadState();
-    const ui = {};
+
+    // ====== Helpers ======
+    const pad2 = (n) => String(n).padStart(2,'0');
+    function isoToDMY(iso){ // 'YYYY-MM-DD' -> 'DD-MM-YYYY'
+      if(!iso) return '';
+      const [y,m,d] = iso.split('-');
+      if(!y||!m||!d) return '';
+      return `${pad2(d)}-${pad2(m)}-${y}`;
+    }
+    function dmyToISO(dmy){ // 'DD-MM-YYYY' -> 'YYYY-MM-DD'
+      if(!dmy) return '';
+      const parts = dmy.replace(/\./g,'-').replace(/\//g,'-').split('-');
+      if(parts.length!==3) return '';
+      const [d,m,y] = parts.map(s=>s.trim());
+      if(!/^\d{1,2}$/.test(d) || !/^\d{1,2}$/.test(m) || !/^\d{4}$/.test(y)) return '';
+      return `${y}-${pad2(m)}-${pad2(d)}`;
+    }
+    function setSaveStatus(t){ document.getElementById('saveStatus').textContent = t }
+    function fmt(n){ return Number(n||0).toLocaleString('gu-IN') }
 
     function loadState(){
       let raw = localStorage.getItem(STORAGE_KEY);
       if(!raw){
-        // initialize empty structure
         const y = new Date().getFullYear();
         const base = { society:'સ્ટાર ગાર્ડન', data:{} };
         base.data[y] = {};
@@ -230,9 +232,9 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       setSaveStatus('✅ સેવ થયું');
       setTimeout(()=>setSaveStatus('—'),1500);
+      // Broadcast change to other tabs
+      window.dispatchEvent(new Event('storage'));
     }
-
-    function setSaveStatus(t){ document.getElementById('saveStatus').textContent = t }
 
     // ====== UI Build ======
     function buildYearOptions(){
@@ -242,17 +244,29 @@
       sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
       sel.value = thisYear;
       if(!state.data[sel.value]){ state.data[sel.value] = {}; for(let m=0;m<12;m++) state.data[sel.value][m] = {} }
-      sel.addEventListener('change', ()=>{ if(!state.data[sel.value]){ state.data[sel.value] = {}; for(let m=0;m<12;m++) state.data[sel.value][m] = {} } buildMonthTabs(0); renderMonthTable(0); renderYearSummary(); buildWhatsAppText(0) });
+      sel.addEventListener('change', ()=>{
+        if(!state.data[sel.value]){ state.data[sel.value] = {}; for(let m=0;m<12;m++) state.data[sel.value][m] = {} }
+        const firstM = 0;
+        buildMonthTabs(firstM);
+        renderMonthTable(firstM);
+        renderYearSummary();
+        buildWhatsAppText(firstM);
+      });
     }
 
-    function buildMonthTabs(active= (new Date().getMonth())){
+    function buildMonthTabs(active=(new Date().getMonth())){
       const wrap = document.getElementById('monthTabs');
       wrap.innerHTML = '';
       MONTHS.forEach((name,idx)=>{
         const b = document.createElement('button');
         b.className = 'tab' + (idx===active?' active':'');
         b.textContent = name;
-        b.onclick = ()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); renderMonthTable(idx); buildWhatsAppText(idx) };
+        b.onclick = ()=>{
+          document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+          b.classList.add('active');
+          renderMonthTable(idx);
+          buildWhatsAppText(idx);
+        };
         wrap.appendChild(b);
       });
     }
@@ -260,18 +274,43 @@
     function ensureMonth(year, m){
       if(!state.data[year]) state.data[year] = {};
       if(!state.data[year][m]) state.data[year][m] = {};
-      FLATS.forEach(f=>{ if(!state.data[year][m][f]) state.data[year][m][f] = { date:'', amount:'' } });
+      FLATS.forEach(f=>{
+        if(!state.data[year][m][f]) state.data[year][m][f] = { date:'', amount:'' };
+      });
+    }
+
+    function statusBadge(amount){
+      const paid = (Number(amount) === MAINTENANCE_AMOUNT);
+      return `<span class="status ${paid?'paid':'due'}">${paid?'જમા':'બાકી'}</span>`
+    }
+
+    function monthlyTotal(y,m){
+      return FLATS.reduce((s,f)=> s + (Number(state.data[y][m][f]?.amount||0)), 0);
+    }
+
+    function updateDerivedUI(m){
+      const y = +document.getElementById('year').value;
+      document.getElementById('monthTotal').textContent = fmt(monthlyTotal(y,m));
+      buildWhatsAppText(m);
+      renderYearSummary();
+      setSaveStatus('✳️ બદલાયો (સેવ કરો)');
     }
 
     function renderMonthTable(m){
       const y = +document.getElementById('year').value;
       ensureMonth(y,m);
+
       const rows = FLATS.map(f=>{
         const rec = state.data[y][m][f] || {date:'',amount:''};
+        const displayDate = isoToDMY(rec.date); // show as DD-MM-YYYY
         return `<tr data-flat="${f}">
-          <td class="center"><input type="date" value="${rec.date||''}" data-field="date"></td>
+          <td class="center">
+            <input class="date-picker" type="text" placeholder="DD-MM-YYYY" value="${displayDate}" data-field="date">
+          </td>
           <td class="center">${f}</td>
-          <td class="right"><input type="number" min="0" step="1" placeholder="0" value="${rec.amount}" data-field="amount"></td>
+          <td class="right">
+            <input type="number" min="0" step="1" placeholder="0" value="${rec.amount}" data-field="amount">
+          </td>
           <td class="center">${statusBadge(rec.amount)}</td>
         </tr>`;
       }).join('');
@@ -290,40 +329,25 @@
         </table>
       `;
 
-      // attach listeners
-      document.querySelectorAll('tbody input').forEach(inp=>{
+      // amount listeners
+      document.querySelectorAll('tbody input[type="number"]').forEach(inp=>{
         inp.addEventListener('input', (e)=>{
           const tr = e.target.closest('tr');
           const flat = +tr.dataset.flat;
-          const field = e.target.dataset.field;
           let val = e.target.value;
-          if(field==='amount') val = val===''? '' : Math.max(0, parseInt(val||0,10) || 0);
-          state.data[y][m][flat][field] = val;
-          // update status cell
+          val = val===''? '' : Math.max(0, parseInt(val||0,10) || 0);
+          state.data[y][m][flat].amount = val;
           tr.querySelector('td:last-child').innerHTML = statusBadge(state.data[y][m][flat].amount);
-          // update total
-          document.getElementById('monthTotal').textContent = fmt(monthlyTotal(y,m));
-          // rebuild WA text and summary live
-          buildWhatsAppText(m);
-          renderYearSummary();
-          setSaveStatus('✳️ બદલાયો (સેવ કરો)');
+          updateDerivedUI(m);
         });
       });
 
-      // Set header inputs (society, year)
+      // date pickers (Flatpickr) + manual typing fallback
+      initDatePickers(m);
+
+      // Set header inputs (society)
       document.getElementById('society').value = state.society || 'સ્ટાર ગાર્ડન';
     }
-
-    function statusBadge(amount){
-      const paid = (Number(amount) === MAINTENANCE_AMOUNT);
-      return `<span class="status ${paid?'paid':'due'}">${paid?'જમા':'બાકી'}</span>`
-    }
-
-    function monthlyTotal(y,m){
-      return FLATS.reduce((s,f)=> s + (Number(state.data[y][m][f]?.amount||0)), 0);
-    }
-
-    function fmt(n){ return Number(n||0).toLocaleString('gu-IN') }
 
     function buildWhatsAppText(m){
       const y = +document.getElementById('year').value;
@@ -331,19 +355,19 @@
       const society = document.getElementById('society').value || 'સ્ટાર ગાર્ડન';
       const lines = [];
       lines.push(`🏡 ${society} – ${monthName} ${y}`);
-      lines.push(`📋 મેન્ટેનન્સ આવક`); // changed word here
+      lines.push(`📋 મેન્ટેનન્સ આવક`);
       lines.push('');
       lines.push(`તારીખ       ફ્લેટ નં   રકમ    સ્થિતિ`);
       FLATS.forEach(f=>{
         const r = state.data[y][m][f];
-        const date = r.date? r.date.split('-').reverse().join('-') : '—';
+        const date = r.date ? r.date.split('-').reverse().join('-') : '—'; // show as DD-MM-YYYY
         const amt = r.amount===''? 0 : Number(r.amount);
         const st = amt>0? 'જમા':'બાકી';
-        lines.push(`${date.padEnd(12)} ${String(f).padEnd(7)} ₹${String(amt).padEnd(6)} ${st}`);
+        lines.push(`${String(date).padEnd(12)} ${String(f).padEnd(7)} ₹${String(amt).padEnd(6)} ${st}`);
       });
       lines.push('');
       lines.push('-----------------------------------');
-      lines.push(`💰 કુલ આવક: ₹${fmt(monthlyTotal(y,m))}`); // changed word here
+      lines.push(`💰 કુલ આવક: ₹${fmt(monthlyTotal(y,m))}`);
       document.getElementById('waText').value = lines.join('\n');
     }
 
@@ -358,6 +382,47 @@
       });
       html += `</tbody><tfoot><tr><td class="right">સોસાયટી કુલ</td><td class="right">₹ ${fmt(grand)}</td></tr></tfoot></table>`;
       document.getElementById('yearSummary').innerHTML = html;
+    }
+
+    // ====== Date Picker Setup ======
+    function initDatePickers(currentMonthIndex){
+      const y = +document.getElementById('year').value;
+
+      // Destroy any existing flatpickr instances to avoid duplicates
+      if (window._fpInstances && window._fpInstances.length){
+        window._fpInstances.forEach(fp => { try { fp.destroy(); } catch(_){} });
+      }
+      window._fpInstances = [];
+
+      document.querySelectorAll('input.date-picker').forEach(inp=>{
+        const tr = inp.closest('tr');
+        const flat = +tr.dataset.flat;
+
+        // manual typing fallback
+        ['change','blur'].forEach(ev=>{
+          inp.addEventListener(ev, ()=>{
+            const iso = dmyToISO(inp.value);
+            if(iso || inp.value===''){
+              state.data[y][currentMonthIndex][flat].date = iso;
+              updateDerivedUI(currentMonthIndex);
+            }
+          });
+        });
+
+        // init flatpickr
+        const fp = flatpickr(inp, {
+          dateFormat: "d-m-Y",
+          allowInput: true,
+          locale: { firstDayOfWeek: 1 },
+          defaultDate: inp.value || null,
+          onChange: (selectedDates, dateStr) => {
+            const iso = dmyToISO(dateStr);
+            state.data[y][currentMonthIndex][flat].date = iso;
+            updateDerivedUI(currentMonthIndex);
+          }
+        });
+        window._fpInstances.push(fp);
+      });
     }
 
     // ====== Events ======
@@ -388,10 +453,31 @@
       const file = e.target.files[0]; if(!file) return;
       const reader = new FileReader();
       reader.onload = ()=>{
-        try{ const obj = JSON.parse(reader.result); if(!obj.data) throw 0; state = obj; buildMonthTabs(); renderMonthTable(new Date().getMonth()); renderYearSummary(); buildWhatsAppText(new Date().getMonth()); setSaveStatus('✅ ડેટા રીસ્ટોર થયો'); }
-        catch{ alert('ફાઇલ માન્ય નથી.'); }
+        try{
+          const obj = JSON.parse(reader.result);
+          if(!obj.data) throw 0;
+          state = obj;
+          let activeM = new Date().getMonth() - 1; if (activeM < 0) activeM = 11;
+          buildMonthTabs(activeM);
+          renderMonthTable(activeM);
+          renderYearSummary();
+          buildWhatsAppText(activeM);
+          setSaveStatus('✅ ડેટા રીસ્ટોર થયો');
+        } catch { alert('ફાઇલ માન્ય નથી.'); }
       };
       reader.readAsText(file);
+    });
+
+    // Sync across tabs
+    window.addEventListener('storage', function(e){
+      if (!e || !e.key || e.key === STORAGE_KEY) {
+        state = loadState();
+        let activeM = Array.from(document.querySelectorAll('.tab')).findIndex(t=>t.classList.contains('active'));
+        if (activeM < 0) activeM = new Date().getMonth();
+        renderMonthTable(activeM);
+        renderYearSummary();
+        buildWhatsAppText(activeM);
+      }
     });
 
     // ====== Init ======
@@ -401,25 +487,11 @@
       // Show last month by default
       let activeM = new Date().getMonth() - 1;
       if (activeM < 0) activeM = 11; // If January, show December
-      buildMonthTabs(activeM); // <-- pass activeM here
+      buildMonthTabs(activeM);
       renderMonthTable(activeM);
       renderYearSummary();
       buildWhatsAppText(activeM);
     })();
-	function initDatePickers() {
-  flatpickr('input[type="date"]', {
-    dateFormat: "d-m-Y", // Gujarati-friendly format
-    allowInput: true,
-    locale: {
-      firstDayOfWeek: 1
-    }
-  });
-}
-
-// Call this function after rendering the month table
-renderMonthTable(activeM);   // existing call
-initDatePickers();           // new call
-
   </script>
 </body>
 </html>
