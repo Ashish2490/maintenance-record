@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>બિ બિલ્ડિંગ મેન્ટેનન્સ રેકોર્ડ (ગુજરાતી)</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --card:#111827;        /* gray-900 */
+      --muted:#334155;       /* slate-600 */
+      --text:#e5e7eb;        /* gray-200 */
+      --accent:#22c55e;      /* green-500 */
+      --accent2:#3b82f6;     /* blue-500 */
+      --warn:#f59e0b;        /* amber-500 */
+      --danger:#ef4444;      /* red-500 */
+      --soft:#1f2937;        /* gray-800 */
+      --chip:#0ea5e9;        /* sky-500 */
+    }
+    *{box-sizing:border-box;font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans Gujarati, Noto Sans, Arial, sans-serif}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#0b1220);color:var(--text)}
+    .container{max-width:1100px;margin:24px auto;padding:16px}
+    .card{background:linear-gradient(180deg,var(--card),#0c1220);border:1px solid #1f2937;padding:16px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:0 0 10px;font-size:24px;letter-spacing:.3px}
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .row > *{flex:0 0 auto}
+    input,select,button,textarea{background:#0b1220;border:1px solid #223049;color:var(--text);padding:10px 12px;border-radius:12px;outline:none}
+    input[type="number"]{width:110px;text-align:right}
+    input[type="date"]{min-width:150px}
+    select{min-width:140px}
+    button{cursor:pointer;border:1px solid #2a3a55}
+    .btn{display:inline-flex;gap:8px;align-items:center}
+    .btn.primary{background:linear-gradient(180deg,#124,#162845);border-color:#2a3a55}
+    .btn.ok{background:linear-gradient(180deg,#0b3322,#0c4527);border-color:#0b5}
+    .btn.warn{background:linear-gradient(180deg,#3a2a09,#4a3508);border-color:#7a5805}
+    .btn.danger{background:linear-gradient(180deg,#401414,#551616);border-color:#7a1f1f}
+    .pill{padding:8px 12px;border-radius:999px;background:#0b1220;border:1px solid #223049}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+    .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .tab{padding:8px 12px;border-radius:14px;background:#0b1220;border:1px solid #223049;cursor:pointer;font-size:14px}
+    .tab.active{background:linear-gradient(180deg,#132036,#0e1a2b);border-color:#35507a}
+
+    table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;overflow:hidden;border-radius:16px;border:1px solid #1e293b}
+    thead th{background:#0c1626;position:sticky;top:0;padding:10px 8px;border-bottom:1px solid #1f2a3a;font-weight:600}
+    tbody td{padding:8px;border-bottom:1px dashed #1f2a3a}
+    tbody tr:hover{background:#0b1220}
+    tfoot td{padding:12px;font-weight:700;border-top:1px solid #253249;background:#0b1220}
+    .status{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid #244}
+    .paid{background:rgba(34,197,94,.12);border-color:#1c5734}
+    .due{background:rgba(239,68,68,.1);border-color:#5b1e1e}
+    .muted{color:#9aa4b2}
+    .right{text-align:right}
+    .center{text-align:center}
+    .small{font-size:12px}
+    .footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+    .note{font-size:12px;color:#aab}
+    .divider{height:1px;background:#1f2937;margin:14px 0;border-radius:1px}
+    .flex-1{flex:1}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    textarea{width:100%;min-height:120px}
+  </style>
+  <!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🏡 સોસાયટી મેન્ટેનન્સ રેકોર્ડ (ગુજરાતી)</h1>
+      <div class="row" style="margin-top:6px">
+        <label class="pill">સોસાયટી નામ:
+          <input id="society" placeholder="સ્ટાર ગાર્ડન બિ બિલ્ડિંગ" style="margin-left:8px;min-width:220px" />
+        </label>
+        <label class="pill">વર્ષ:
+          <select id="year" style="margin-left:8px"></select>
+        </label>
+        <span class="pill small">કુલ ફ્લેટ: <b>22</b></span>
+        <span class="pill small">ડેટા સેવ: <span id="saveStatus" class="muted">-</span></span>
+      </div>
+
+      <div class="tabs" id="monthTabs"></div>
+
+      <div id="tableWrap"></div>
+
+      <div class="footer">
+        <button class="btn ok" id="saveBtn">💾 સેવ</button>
+        <button class="btn primary" id="copyBtn">📋 WhatsApp મેસેજ કૉપી</button>
+        <button class="btn warn" id="clearMonth">🧹 આ મહિનો ક્લિયર</button>
+        <button class="btn" id="downloadJson">⬇️ બેકઅપ (JSON)</button>
+        <label class="btn" for="uploadJson" style="cursor:pointer">⬆️ રીસ્ટોર <input id="uploadJson" type="file" accept="application/json" style="display:none"></label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid">
+        <div class="card" style="border-radius:14px">
+          <h3 style="margin:0 0 8px">📜 WhatsApp મેસેજ (ઓટો)</h3>
+          <textarea id="waText" class="mono" readonly></textarea>
+          <div class="note">ઉપરનો ટેક્સ્ટ કૉપી કરીને સીધો WhatsApp માં પેસ્ટ કરો.</div>
+        </div>
+        <div class="card" style="border-radius:14px">
+          <h3 style="margin:0 0 8px">📈 વર્ષવાર સારાંશ</h3>
+          <div id="yearSummary"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ====== Config ======
+    const FLATS = [101,102,103,104, 201,202,203,204, 301,302,303,304, 401,402,403,404, 501,502];
+    const MONTHS = [
+      'જાન્યુઆરી','ફેબ્રુઆરી','માર્ચ','એપ્રિલ','મે','જૂન','જુલાઈ','ઓગસ્ટ','સપ્ટેમ્બર','ઓક્ટોબર','નવેમ્બર','ડિસેમ્બર'
+    ];
+    const STORAGE_KEY = 'sg_maintenance_v1';
+
+    // ====== State ======
+    let state = loadState();
+    const ui = {};
+
+    function loadState(){
+      let raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw){
+        // initialize empty structure
+        const y = new Date().getFullYear();
+        const base = { society:'સ્ટાર ગાર્ડન', data:{} };
+        base.data[y] = {};
+        for(let m=0;m<12;m++) base.data[y][m] = {};
+        return base;
+      }
+      try{ return JSON.parse(raw); }catch{ return {society:'સ્ટાર ગાર્ડન', data:{}} }
+    }
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSaveStatus('✅ સેવ થયું');
+      setTimeout(()=>setSaveStatus('—'),1500);
+    }
+
+    function setSaveStatus(t){ document.getElementById('saveStatus').textContent = t }
+
+    // ====== UI Build ======
+    function buildYearOptions(){
+      const sel = document.getElementById('year');
+      const thisYear = new Date().getFullYear();
+      const years = [thisYear-1, thisYear, thisYear+1];
+      sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+      sel.value = thisYear;
+      if(!state.data[sel.value]){ state.data[sel.value] = {}; for(let m=0;m<12;m++) state.data[sel.value][m] = {} }
+      sel.addEventListener('change', ()=>{ if(!state.data[sel.value]){ state.data[sel.value] = {}; for(let m=0;m<12;m++) state.data[sel.value][m] = {} } buildMonthTabs(0); renderMonthTable(0); renderYearSummary(); buildWhatsAppText(0) });
+    }
+
+    function buildMonthTabs(active= (new Date().getMonth())){
+      const wrap = document.getElementById('monthTabs');
+      wrap.innerHTML = '';
+      MONTHS.forEach((name,idx)=>{
+        const b = document.createElement('button');
+        b.className = 'tab' + (idx===active?' active':'');
+        b.textContent = name;
+        b.onclick = ()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); renderMonthTable(idx); buildWhatsAppText(idx) };
+        wrap.appendChild(b);
+      });
+    }
+
+    function ensureMonth(year, m){
+      if(!state.data[year]) state.data[year] = {};
+      if(!state.data[year][m]) state.data[year][m] = {};
+      FLATS.forEach(f=>{ if(!state.data[year][m][f]) state.data[year][m][f] = { date:'', amount:'' } });
+    }
+
+    function renderMonthTable(m){
+      const y = +document.getElementById('year').value;
+      ensureMonth(y,m);
+      const rows = FLATS.map(f=>{
+        const rec = state.data[y][m][f] || {date:'',amount:''};
+        return `<tr data-flat="${f}">
+          <td class="center"><input type="date" value="${rec.date||''}" data-field="date"></td>
+          <td class="center">${f}</td>
+          <td class="right"><input type="number" min="0" step="1" placeholder="0" value="${rec.amount}" data-field="amount"></td>
+          <td class="center">${statusBadge(rec.amount)}</td>
+        </tr>`;
+      }).join('');
+
+      const total = monthlyTotal(y,m);
+
+      document.getElementById('tableWrap').innerHTML = `
+        <table>
+          <thead>
+            <tr><th>તારીખ</th><th>ફ્લેટ નં</th><th class="right">રકમ</th><th class="center">સ્થિતિ</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr><td></td><td class="right">મહિના ની કુલ</td><td class="right">₹ <span id="monthTotal">${fmt(total)}</span></td><td></td></tr>
+          </tfoot>
+        </table>
+      `;
+
+      // attach listeners
+      document.querySelectorAll('tbody input').forEach(inp=>{
+        inp.addEventListener('input', (e)=>{
+          const tr = e.target.closest('tr');
+          const flat = +tr.dataset.flat;
+          const field = e.target.dataset.field;
+          let val = e.target.value;
+          if(field==='amount') val = val===''? '' : Math.max(0, parseInt(val||0,10) || 0);
+          state.data[y][m][flat][field] = val;
+          // update status cell
+          tr.querySelector('td:last-child').innerHTML = statusBadge(state.data[y][m][flat].amount);
+          // update total
+          document.getElementById('monthTotal').textContent = fmt(monthlyTotal(y,m));
+          // rebuild WA text and summary live
+          buildWhatsAppText(m);
+          renderYearSummary();
+          setSaveStatus('✳️ બદલાયો (સેવ કરો)');
+        });
+      });
+
+      // Set header inputs (society, year)
+      document.getElementById('society').value = state.society || 'સ્ટાર ગાર્ડન';
+    }
+
+    function statusBadge(amount){
+      const paid = (amount!=='' && Number(amount) > 0);
+      return `<span class="status ${paid?'paid':'due'}">${paid?'જમા':'બાકી'}</span>`
+    }
+
+    function monthlyTotal(y,m){
+      return FLATS.reduce((s,f)=> s + (Number(state.data[y][m][f]?.amount||0)), 0);
+    }
+
+    function fmt(n){ return Number(n||0).toLocaleString('gu-IN') }
+
+    function buildWhatsAppText(m){
+      const y = +document.getElementById('year').value;
+      const monthName = MONTHS[m];
+      const society = document.getElementById('society').value || 'સ્ટાર ગાર્ડન';
+      const lines = [];
+      lines.push(`🏡 ${society} – ${monthName} ${y}`);
+      lines.push(`📋 મેન્ટેનન્સ વસુલાત`);
+      lines.push('');
+      lines.push(`તારીખ       ફ્લેટ નં   રકમ    સ્થિતિ`);
+      FLATS.forEach(f=>{
+        const r = state.data[y][m][f];
+        const date = r.date? r.date.split('-').reverse().join('-') : '—';
+        const amt = r.amount===''? 0 : Number(r.amount);
+        const st = amt>0? 'જમા':'બાકી';
+        lines.push(`${date.padEnd(12)} ${String(f).padEnd(7)} ₹${String(amt).padEnd(6)} ${st}`);
+      });
+      lines.push('');
+      lines.push('-----------------------------------');
+      lines.push(`💰 કુલ વસુલાત: ₹${fmt(monthlyTotal(y,m))}`);
+      document.getElementById('waText').value = lines.join('\n');
+    }
+
+    function renderYearSummary(){
+      const y = +document.getElementById('year').value;
+      let html = '<table><thead><tr><th>ફ્લેટ</th><th class="right">વાર્ષિક કુલ</th></tr></thead><tbody>';
+      let grand = 0;
+      FLATS.forEach(f=>{
+        let sum = 0; for(let m=0;m<12;m++){ ensureMonth(y,m); sum += Number(state.data[y][m][f]?.amount||0) }
+        grand += sum;
+        html += `<tr><td>${f}</td><td class="right">₹ ${fmt(sum)}</td></tr>`;
+      });
+      html += `</tbody><tfoot><tr><td class="right">સોસાયટી કુલ</td><td class="right">₹ ${fmt(grand)}</td></tr></tfoot></table>`;
+      document.getElementById('yearSummary').innerHTML = html;
+    }
+
+    // ====== Events ======
+    document.getElementById('saveBtn').addEventListener('click', ()=>{
+      state.society = document.getElementById('society').value || 'સ્ટાર ગાર્ડન';
+      saveState();
+    });
+    document.getElementById('copyBtn').addEventListener('click', async ()=>{
+      const ta = document.getElementById('waText');
+      ta.select(); ta.setSelectionRange(0, 99999);
+      try{ await navigator.clipboard.writeText(ta.value); setSaveStatus('📋 કૉપી થયું'); }catch(e){ setSaveStatus('❗ કૉપીમાં મુશ્કેલી'); }
+    });
+    document.getElementById('clearMonth').addEventListener('click', ()=>{
+      const y = +document.getElementById('year').value;
+      const m = Array.from(document.querySelectorAll('.tab')).findIndex(t=>t.classList.contains('active'));
+      if(!confirm('આ મહિના ના બધા દાખલા ક્લિયર થશે. ખાતરી?')) return;
+      FLATS.forEach(f=> state.data[y][m][f] = {date:'', amount:''});
+      renderMonthTable(m); buildWhatsAppText(m); renderYearSummary(); setSaveStatus('🧹 ક્લિયર થયું');
+    });
+    document.getElementById('downloadJson').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'maintenance_backup.json';
+      a.click();
+    });
+    document.getElementById('uploadJson').addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{ const obj = JSON.parse(reader.result); if(!obj.data) throw 0; state = obj; buildMonthTabs(); renderMonthTable(new Date().getMonth()); renderYearSummary(); buildWhatsAppText(new Date().getMonth()); setSaveStatus('✅ ડેટા રીસ્ટોર થયો'); }
+        catch{ alert('ફાઇલ માન્ય નથી.'); }
+      };
+      reader.readAsText(file);
+    });
+
+    // ====== Init ======
+    (function init(){
+      document.getElementById('society').value = state.society || 'સ્ટાર ગાર્ડન';
+      buildYearOptions();
+      buildMonthTabs();
+      const activeM = new Date().getMonth();
+      renderMonthTable(activeM);
+      renderYearSummary();
+      buildWhatsAppText(activeM);
+    })();
+	function initDatePickers() {
+  flatpickr('input[type="date"]', {
+    dateFormat: "d-m-Y", // Gujarati-friendly format
+    allowInput: true,
+    locale: {
+      firstDayOfWeek: 1
+    }
+  });
+}
+
+// Call this function after rendering the month table
+renderMonthTable(activeM);   // existing call
+initDatePickers();           // new call
+
+  </script>
+</body>
+</html>
